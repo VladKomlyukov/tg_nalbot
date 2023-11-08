@@ -100,16 +100,10 @@ async def analitycs_cmd(message: Message):
 # хэндлер срабатывает на команду Создать рассылку
 @router.message(F.text == LEXICON_ADMIN['newsletter_btn'], StateFilter(default_state))
 async def newsletter_cmd(message: Message, state: FSMContext):
-    if message.from_user.id in user_login_data and message.from_user.id not in user_message_for_sending:
+    if message.from_user.id in user_login_data:
         await message.answer(text=LEXICON_ADMIN['newsletter_start_message'],
                              reply_markup=kb_buttons_admin_reset)
         await state.set_state(FSMAdmin.newsletter_message_input)
-    elif message.from_user.id in user_login_data and message.from_user.id in user_message_for_sending:
-        await message.answer(text=LEXICON_ADMIN['message_exists'])
-        time.sleep(1)
-        await message.answer_photo(photo=user_message_for_sending[message.from_user.id]['photo_id'],
-                                   caption=user_message_for_sending[message.from_user.id]['message_text'],
-                                   reply_markup=kb_buttons_admin_newsletter_menu)
     else:
         await message.answer(text=LEXICON_ADMIN['not_login_and_newsletter'],
                              reply_markup=kb_buttons_start)
@@ -121,8 +115,6 @@ async def newsletter_cmd(message: Message, state: FSMContext):
 async def reset_newletter_cmd(message: Message, state: FSMContext):
     await message.answer(text=LEXICON_ADMIN['reset_neswletter_message'],
                           reply_markup=kb_buttons_admin_panel)
-    del user_message_for_sending[message.from_user.id]
-
     await state.clear()
 
 # хэндлер срабатывает при переходе из состояния Создать рассылку
@@ -144,19 +136,20 @@ async def photo_to_newsletter_cmd(message: Message, state: FSMContext, largest_p
     await state.update_data(photo_unique_id=largest_photo.file_unique_id,
                             photo_id=largest_photo.file_id)
     user_message_for_sending[message.from_user.id] = await state.get_data()
-    await state.clear()
     await message.answer(text=LEXICON_ADMIN['newsletter_check_message'],
                          reply_markup=kb_buttons_admin_newsletter_menu)
+    await state.clear()
+
 
 # хэндлер срабатывает на команду Посмотреть сообщение
 @router.message(F.text == LEXICON_ADMIN['show_message_btn'])
 async def show_message_for_newsletter_cmd(message: Message, state: FSMContext):
-    if message.from_user.id in user_message_for_sending:
-        await message.answer_photo(photo=user_message_for_sending[message.from_user.id]['photo_id'],
-                                   caption=user_message_for_sending[message.from_user.id]['message_text'],
-                                   reply_markup=kb_buttons_admin_newsletter_menu)
-    else:
-        await message.answer(text=LEXICON_ADMIN['unfilled_message'], reply_markup=kb_buttons_admin_panel)
+    #if message.from_user.id in user_message_for_sending:
+    await message.answer_photo(photo=user_message_for_sending[message.from_user.id]['photo_id'],
+                                caption=user_message_for_sending[message.from_user.id]['message_text'],
+                                reply_markup=kb_buttons_admin_newsletter_menu)
+    # else:
+    #     await message.answer(text=LEXICON_ADMIN['unfilled_message'], reply_markup=kb_buttons_admin_panel)
 
 # хэндлер срабатывает на команду Запустить рассылку
 @router.message(F.text.lower() == LEXICON_ADMIN['start_newsletter_from_menu'], StateFilter(default_state))
