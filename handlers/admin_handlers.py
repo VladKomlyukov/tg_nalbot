@@ -272,9 +272,17 @@ async def incorrect_message_start_newsletter(message: Message):
     await message.answer(text=LEXICON_ADMIN['incorrect_message'],
                          reply_markup=kb_buttons_admin_run_newsletter_menu)
 
-# хэндлер срабатывает на некорректное сообщение на этапе отправки фото
+
+# хэндлер срабатывает на некорректное сообщение на этапе отправки текста для рассылки
+@router.message(StateFilter(FSMAdmin.newsletter_message_input))
+async def incorrect_message_text(message: Message):
+    await message.answer(text=LEXICON_ADMIN['incorrect_text_message'],
+                         reply_markup=kb_buttons_admin_reset)
+
+
+# хэндлер срабатывает на некорректное сообщение на этапе отправки фото для рассылки
 @router.message(StateFilter(FSMAdmin.send_photo_message_input))
-async def incorrect_message_category_confirmation_cmd(message: Message):
+async def incorrect_message_photo(message: Message):
     await message.answer(text=LEXICON_ADMIN['incorrect_photo'],
                          reply_markup=kb_buttons_admin_reset)
 
