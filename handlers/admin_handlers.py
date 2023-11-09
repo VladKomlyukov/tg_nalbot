@@ -176,6 +176,7 @@ async def users_category_confirmation_cmd(message: Message, state: FSMContext):
 @router.message(StateFilter(FSMAdmin.start_newsletter),
                 F.text.lower() == LEXICON_ADMIN['run_newsletter'])
 async def start_newsletter_cmd(message: Message,  state: FSMContext):
+    await message.answer(text=LEXICON_ADMIN['newsletter_waiting'], reply_markup=kb_buttons_admin_panel)
     try:
         if user_message_for_sending[message.from_user.id]['category'] == 'все пользователи':
             category: str = 'все пользователи'
@@ -251,6 +252,7 @@ async def start_newsletter_cmd(message: Message,  state: FSMContext):
             del user_message_for_sending[message.from_user.id]
     except Exception as e:
         print(e)
+        await message.answer(text=LEXICON_ADMIN['newsletter_error'], reply_markup=kb_buttons_admin_panel)
 
 
 # хэндлер срабатывает на некорректное сообщение на этапе выбора категории
