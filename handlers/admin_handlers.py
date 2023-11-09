@@ -183,72 +183,72 @@ async def start_newsletter_cmd(message: Message,  state: FSMContext):
             for el in users_list:
                 await bot.send_photo(chat_id=el, photo=user_message_for_sending[message.from_user.id]['photo_id'],
                                      caption=user_message_for_sending[message.from_user.id]['message_text'])
-                await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
-                await state.clear()
-                del user_message_for_sending[message.from_user.id]
+            await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
+            await state.clear()
+            del user_message_for_sending[message.from_user.id]
         elif user_message_for_sending[message.from_user.id]['category'] == 'заполнившие анкету':
             category: str = 'заполнившие анкету'
             users_list: list = await db.cmd_select_users_with_status(category)
             for el in users_list:
                 await bot.send_photo(chat_id=el, photo=user_message_for_sending[message.from_user.id]['photo_id'],
                                      caption=user_message_for_sending[message.from_user.id]['message_text'])
-                await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
-                await state.clear()
-                del user_message_for_sending[message.from_user.id]
+            await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
+            await state.clear()
+            del user_message_for_sending[message.from_user.id]
         elif user_message_for_sending[message.from_user.id]['category'] == 'пользователи на этапе - запустили бота':
             category: str = 'пользователи на этапе - запустили бота'
             users_list: list = await db.cmd_select_users_with_status(category)
             for el in users_list:
                 await bot.send_photo(chat_id=el, photo=user_message_for_sending[message.from_user.id]['photo_id'],
                                      caption=user_message_for_sending[message.from_user.id]['message_text'])
-                await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
-                await state.clear()
-                del user_message_for_sending[message.from_user.id]
+            await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
+            await state.clear()
+            del user_message_for_sending[message.from_user.id]
         elif user_message_for_sending[message.from_user.id]['category'] == 'пользователи на этапе - выбор страны':
             category: str = 'пользователи на этапе - выбор страны'
             users_list: list = await db.cmd_select_users_with_status(category)
             for el in users_list:
                 await bot.send_photo(chat_id=el, photo=user_message_for_sending[message.from_user.id]['photo_id'],
                                      caption=user_message_for_sending[message.from_user.id]['message_text'])
-                await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
-                await state.clear()
-                del user_message_for_sending[message.from_user.id]
+            await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
+            await state.clear()
+            del user_message_for_sending[message.from_user.id]
         elif user_message_for_sending[message.from_user.id]['category'] == 'пользователи на этапе - ввод возраста':
             category: str = 'пользователи на этапе - ввод возраста'
             users_list: list = await db.cmd_select_users_with_status(category)
             for el in users_list:
                 await bot.send_photo(chat_id=el, photo=user_message_for_sending[message.from_user.id]['photo_id'],
                                      caption=user_message_for_sending[message.from_user.id]['message_text'])
-                await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
-                await state.clear()
-                del user_message_for_sending[message.from_user.id]
+            await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
+            await state.clear()
+            del user_message_for_sending[message.from_user.id]
         elif user_message_for_sending[message.from_user.id]['category'] == 'пользователи на этапе - наличие кредитов':
             category: str = 'пользователи на этапе - наличие кредитов'
             users_list: list = await db.cmd_select_users_with_status(category)
             for el in users_list:
                 await bot.send_photo(chat_id=el, photo=user_message_for_sending[message.from_user.id]['photo_id'],
                                      caption=user_message_for_sending[message.from_user.id]['message_text'])
-                await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
-                await state.clear()
-                del user_message_for_sending[message.from_user.id]
+            await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
+            await state.clear()
+            del user_message_for_sending[message.from_user.id]
         elif user_message_for_sending[message.from_user.id]['category'] == 'пользователи из россии':
             category: str = 'пользователи из россии'
             users_list: list = await db.cmd_select_users_with_status(category)
             for el in users_list:
                 await bot.send_photo(chat_id=el, photo=user_message_for_sending[message.from_user.id]['photo_id'],
                                      caption=user_message_for_sending[message.from_user.id]['message_text'])
-                await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
-                await state.clear()
-                del user_message_for_sending[message.from_user.id]
+            await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
+            await state.clear()
+            del user_message_for_sending[message.from_user.id]
         elif user_message_for_sending[message.from_user.id]['category'] == 'пользователи из казахстана':
             category: str = 'пользователи из казахстана'
             users_list: list = await db.cmd_select_users_with_status(category)
             for el in users_list:
                 await bot.send_photo(chat_id=el, photo=user_message_for_sending[message.from_user.id]['photo_id'],
                                      caption=user_message_for_sending[message.from_user.id]['message_text'])
-                await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
-                await state.clear()
-                del user_message_for_sending[message.from_user.id]
+            await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
+            await state.clear()
+            del user_message_for_sending[message.from_user.id]
     except Exception as e:
         print(e)
 
