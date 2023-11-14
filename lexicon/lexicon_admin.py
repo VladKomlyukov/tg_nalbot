@@ -3,16 +3,28 @@ import asyncio
 from datetime import datetime
 from math import *
 
+# все пользователи
 all_users = asyncio.run(db.cmd_select_all_users())
 new_users_today = asyncio.run(db.cmd_select_users_for_today())
+# заполнившие анкеты
 users_form_completed = asyncio.run(db.cmd_select_completed_form_users())
+users_form_completed_today = asyncio.run(db.cmd_select_completed_form_users_today())
+# только запустили бота
 users_started_bot = asyncio.run(db.cmd_select_start_bot_users())
+users_started_bot_today = asyncio.run((db.cmd_select_start_bot_users_today()))
+# выбор страны
 users_country_choice = asyncio.run(db.cmd_select_users_country_choice())
+users_country_choice_today = asyncio.run((db.cmd_select_users_country_choice_today()))
+# ввод возраста
 users_age_choice = asyncio.run(db.cmd_select_users_age_choice())
+users_age_choice_today = asyncio.run((db.cmd_select_users_age_choice_today()))
+# наличие кредитов
 users_having_credits = asyncio.run(db.cmd_select_users_having_credits())
+users_having_credits_today = asyncio.run((db.cmd_select_users_having_credits_today()))
+# статистика по странам
 users_from_ru = asyncio.run(db.cmd_select_ru_users())
 users_from_kz = asyncio.run(db.cmd_select_kz_users())
-
+# переменная с текущей датой
 current_date = datetime.today().strftime('%Y-%m-%d')
 
 
@@ -37,28 +49,35 @@ LEXICON_ADMIN: dict[str, str | list] = {
                         'Нажмите кнопку - "Создать рассылку" для создания сообщения рассылки.',
     'analytics': f'Статистика на {current_date}\n'
                  '\n'
-                 f'Общее кол-во пользователей бота: {all_users} \n'
-                 f'Новых пользователей сегодня: {new_users_today} — '
-                 f'{floor((new_users_today/all_users)*100)}%\n'
+                 f'<b>Общее кол-во пользователей бота: </b>{all_users} \n'
+                 f'<b>Новых пользователей Сегодня: </b>{new_users_today}\n'
                  '\n'
-                 f'Пользователи заполнившие анкету:\n'
-                 f'{users_form_completed} — {floor((users_form_completed/all_users)*100)}%\n'
+                 f'<b>Заполнили анкету:</b>\n'
+                 f'> Всего: {users_form_completed} — {floor((users_form_completed/all_users)*100)}%\n'
+                 f'> Сегодня: {users_form_completed_today} —'
+                 f' {floor((users_form_completed_today/new_users_today)*100)}%\n'
                  '\n'
-                 f'Пользователи, которые остановились после запуска бота:\n'
-                 f'{users_started_bot} — {floor((users_started_bot/all_users)*100)}%\n'
+                 f'<b>Остановились после запуска:</b>\n'
+                 f'> Всего: {users_started_bot} — {floor((users_started_bot/all_users)*100)}%\n'
+                 f'> Сегодня: {users_started_bot_today} — {floor((users_started_bot_today/new_users_today)*100)}%\n'
                  '\n'
-                 f'Пользователи, которые остановились на выборе страны:\n'
-                 f'{users_country_choice} — {floor((users_country_choice/all_users)*100)}%\n'
+                 f'<b>Остановились на выборе страны:</b>\n'
+                 f'> Всего: {users_country_choice} — {floor((users_country_choice/all_users)*100)}%\n'
+                 f'> Сегодня: {users_country_choice_today} —'
+                 f' {floor((users_country_choice_today/new_users_today)*100)}%\n'
                  '\n'
-                 f'Пользователи, которые остановились на вводе возраста:\n'
-                 f'{users_age_choice} — {floor((users_age_choice/all_users)*100)}%\n'
+                 f'<b>Остановились на вводе возраста:</b>\n'
+                 f'> Всего: {users_age_choice} — {floor((users_age_choice/all_users)*100)}%\n'
+                 f'> Сегодня: {users_age_choice_today} — {floor((users_age_choice_today/new_users_today)*100)}%\n'
                  '\n'
-                 f'Пользователи, которые остановились на вопросе о наличии кредитов:\n'
-                 f'{users_having_credits} — {floor((users_having_credits/all_users)*100)}%\n'
+                 f'<b>Остановились на вопросе о наличии кредитов:</b>\n'
+                 f'> Всего: {users_having_credits} — {floor((users_having_credits/all_users)*100)}%\n'
+                 f'> Сегодня: {users_having_credits_today} — '
+                 f'{floor((users_having_credits_today/new_users_today)*100)}%\n'
                  '\n'
-                 f'Пользователи из России: '
+                 f'<b>Пользователи из России:</b> '
                  f'{users_from_ru} — {floor((users_from_ru/all_users)*100)}%\n'
-                 f'Пользователи из Казахстана: '
+                 f'<b>Пользователи из Казахстана:</b> '
                  f'{users_from_kz} — {ceil((users_from_kz/all_users)*100)}%\n',
     'newsletter_start_message': 'ШАГ 1. Введите ТЕКСТ сообщения для рассылки, БЕЗ ФОТО',
     'newsletter_photo_message': 'ШАГ 2. Добавьте только ФОТО для рассылки, БЕЗ ТЕКСТА',

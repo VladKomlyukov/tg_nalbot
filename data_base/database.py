@@ -70,7 +70,6 @@ async def cmd_select_all_users():
 
 # получить информацию об общем кол-ве пользователей за сегодня
 async def cmd_select_users_for_today():
-    # Вычисляем дату, представляющую текущую дату минус один день
     time_now = dt.date.today()
     rows_today_count_users: list = cursor.execute('SELECT count(*) as count FROM Users WHERE joining_date >= ?',
                                                   (time_now,)
@@ -78,10 +77,18 @@ async def cmd_select_users_for_today():
     return rows_today_count_users[0]
 
 
-# получить информацию о кол-ве пользователей, который заполнили анкету польностью
+# получить информацию о кол-ве пользователей, которые заполнили анкету польностью
 async def cmd_select_completed_form_users():
     rows_completed_form_users: list = cursor.execute("SELECT count(*) as count FROM Users "
                                                      "WHERE form_status = 'completed'").fetchone()
+    return rows_completed_form_users[0]
+
+# получить информацию о кол-ве пользователей, которые заполнили анкету полностью СЕГОДНЯ
+async def cmd_select_completed_form_users_today():
+    time_now = dt.date.today()
+    rows_completed_form_users: list = cursor.execute("SELECT count(*) as count FROM Users "
+                                                     "WHERE form_status = 'completed' AND joining_date >= ?",
+                                                  (time_now,)).fetchone()
     return rows_completed_form_users[0]
 
 
@@ -91,6 +98,15 @@ async def cmd_select_start_bot_users():
                                                 "WHERE form_status = 'started'").fetchone()
     return rows_start_bot_users[0]
 
+# получить информацию о кол-ве пользователей, которые остановились после команды /start сегодня
+
+async def cmd_select_start_bot_users_today():
+    time_now = dt.date.today()
+    rows_start_bot_users: list = cursor.execute("SELECT count(*) as count FROM Users "
+                                                "WHERE form_status = 'started' AND joining_date >= ?",
+                                                (time_now,)).fetchone()
+    return rows_start_bot_users[0]
+
 
 # получить информацию о кол-ве пользователей, которые остановились на выборе страны
 async def cmd_select_users_country_choice():
@@ -98,19 +114,42 @@ async def cmd_select_users_country_choice():
                                               "WHERE form_status = 'country_choice'").fetchone()
     return row_country_choice[0]
 
+# получить информацию о кол-ве пользователей, которые остановились на выборе страны СЕГОДНЯ
+async def cmd_select_users_country_choice_today():
+    time_now = dt.date.today()
+    row_country_choice: list = cursor.execute("SELECT count(*) as count FROM Users "
+                                              "WHERE form_status = 'country_choice' AND joining_date >= ?",
+                                                (time_now,)).fetchone()
+    return row_country_choice[0]
 
-# получить информацию о кол-ве пользователей, который остановились на выборе возраста
+
+# получить информацию о кол-ве пользователей, которые остановились на выборе возраста
 async def cmd_select_users_age_choice():
     row_age_choice: list = cursor.execute("SELECT count(*) as count FROM Users "
                                           "WHERE form_status = 'age_input'").fetchone()
     return row_age_choice[0]
 
+# получить информацию о кол-ве пользователей, которые остановились на выборе возраста СЕГОДНЯ
+async def cmd_select_users_age_choice_today():
+    time_now = dt.date.today()
+    row_age_choice: list = cursor.execute("SELECT count(*) as count FROM Users "
+                                          "WHERE form_status = 'age_input' AND joining_date >= ?",
+                                                (time_now,)).fetchone()
+    return row_age_choice[0]
 
+# получить информацию о кол-ве пользователей, которые остановились на вопросе о кредитах
 async def cmd_select_users_having_credits():
     row_having_choice: list = cursor.execute("SELECT count(*) as count FROM Users "
                                              "WHERE form_status = 'having_credits'").fetchone()
     return row_having_choice[0]
 
+# получить информацию о кол-ве пользователей, которые остановились на вопросе о кредитах СЕГОДНЯ
+async def cmd_select_users_having_credits_today():
+    time_now = dt.date.today()
+    row_having_choice: list = cursor.execute("SELECT count(*) as count FROM Users "
+                                             "WHERE form_status = 'having_credits' AND joining_date >= ?",
+                                                (time_now,)).fetchone()
+    return row_having_choice[0]
 
 # получить информацию о кол-ве пользователей из России
 async def cmd_select_ru_users():
