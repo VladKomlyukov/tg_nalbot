@@ -1,5 +1,4 @@
-
-
+import asyncio
 from aiogram import Bot, Dispatcher
 from config_data.config import Config, load_config
 from aiogram.fsm.context import FSMContext
@@ -8,6 +7,8 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import Message, PhotoSize
 from aiogram.filters import Command, StateFilter
 from lexicon.lexicon_admin import LEXICON_ADMIN
+from math import *
+import datetime as dt
 from aiogram import F, Router
 from buttons import (kb_buttons_admin_cancel, kb_buttons_admin_panel, kb_buttons_start,
                      kb_buttons_admin_newsletter_menu, kb_buttons_users_category,
@@ -34,6 +35,7 @@ user_login_data: list = []
 
 # сообщение пользователя для рассылки
 user_message_for_sending: dict = {}
+
 
 # Создаём класс, наследуемый от StatesGroup, для группы состояний нашей FSM
 class FSMAdmin(StatesGroup):
@@ -90,8 +92,60 @@ async def incorrect_password(message: Message):
 # хэндлер срабатывает на команду Аналитика
 @router.message(F.text == LEXICON_ADMIN['analytics_btn'])
 async def analitycs_cmd(message: Message):
+    # все пользователи
+    all_users = await db.cmd_select_all_users()
+    new_users_today = await db.cmd_select_users_for_today()
+    # заполнившие анкеты
+    users_form_completed = await db.cmd_select_completed_form_users()
+    users_form_completed_today = await db.cmd_select_completed_form_users_today()
+    # только запустили бота
+    users_started_bot = await db.cmd_select_start_bot_users()
+    users_started_bot_today = await db.cmd_select_start_bot_users_today()
+    # выбор страны
+    users_country_choice = await db.cmd_select_users_country_choice()
+    users_country_choice_today = await (db.cmd_select_users_country_choice_today())
+    # ввод возраста
+    users_age_choice = await db.cmd_select_users_age_choice()
+    users_age_choice_today = await db.cmd_select_users_age_choice_today()
+    # наличие кредитов
+    users_having_credits = await db.cmd_select_users_having_credits()
+    users_having_credits_today = await db.cmd_select_users_having_credits_today()
+    # статистика по странам
+    users_from_ru = await db.cmd_select_ru_users()
+    users_from_kz = await db.cmd_select_kz_users()
     if message.from_user.id in user_login_data:
-        await message.answer(text=LEXICON_ADMIN['analytics'],
+        await message.answer(text=f'Статистика на {dt.date.today()}\n'
+                 '\n'
+                 f'<b>Общее кол-во пользователей бота: </b>{all_users} \n'
+                 f'<b>Новых пользователей Сегодня: </b>{new_users_today}\n'
+                 '\n'
+                 f'<b>Заполнили анкету:</b>\n'
+                 f'> Всего: {users_form_completed} — {floor((users_form_completed/all_users)*100)}%\n'
+                 f'> Сегодня: {users_form_completed_today} —'
+                 f' {floor((users_form_completed_today/new_users_today)*100)}%\n'
+                 '\n'
+                 f'<b>Остановились после запуска:</b>\n'
+                 f'> Всего: {users_started_bot} — {floor((users_started_bot/all_users)*100)}%\n'
+                 f'> Сегодня: {users_started_bot_today} — {floor((users_started_bot_today/new_users_today)*100)}%\n'
+                 '\n'
+                 f'<b>Остановились на выборе страны:</b>\n'
+                 f'> Всего: {users_country_choice} — {floor((users_country_choice/all_users)*100)}%\n'
+                 f'> Сегодня: {users_country_choice_today} —'
+                 f' {floor((users_country_choice_today/new_users_today)*100)}%\n'
+                 '\n'
+                 f'<b>Остановились на вводе возраста:</b>\n'
+                 f'> Всего: {users_age_choice} — {floor((users_age_choice/all_users)*100)}%\n'
+                 f'> Сегодня: {users_age_choice_today} — {floor((users_age_choice_today/new_users_today)*100)}%\n'
+                 '\n'
+                 f'<b>Остановились на вопросе о наличии кредитов:</b>\n'
+                 f'> Всего: {users_having_credits} — {floor((users_having_credits/all_users)*100)}%\n'
+                 f'> Сегодня: {users_having_credits_today} — '
+                 f'{floor((users_having_credits_today/new_users_today)*100)}%\n'
+                 '\n'
+                 f'<b>Пользователи из России:</b> '
+                 f'{users_from_ru} — {floor((users_from_ru/all_users)*100)}%\n'
+                 f'<b>Пользователи из Казахстана:</b> '
+                 f'{users_from_kz} — {ceil((users_from_kz/all_users)*100)}%\n',
                              reply_markup=kb_buttons_admin_panel)
     else:
         await message.answer(text=LEXICON_ADMIN['not_login_and_newsletter'],

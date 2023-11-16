@@ -72,9 +72,13 @@ async def cmd_select_all_users():
 async def cmd_select_users_for_today():
     time_now = dt.date.today()
     rows_today_count_users: list = cursor.execute('SELECT count(*) as count FROM Users WHERE joining_date >= ?',
-                                                  (time_now,)
-                                                  ).fetchone()
-    return rows_today_count_users[0]
+                                                  (time_now,)).fetchone()
+
+    # костыль, чтобы не возвращался 0 для метода
+    if rows_today_count_users[0] == 0:
+        return 1
+    else:
+        return rows_today_count_users[0]
 
 
 # получить информацию о кол-ве пользователей, которые заполнили анкету польностью

@@ -1,7 +1,9 @@
 import data_base.database as db
 import asyncio
-from datetime import datetime
 from math import *
+import datetime as dt
+
+
 
 # все пользователи
 all_users = asyncio.run(db.cmd_select_all_users())
@@ -24,8 +26,8 @@ users_having_credits_today = asyncio.run((db.cmd_select_users_having_credits_tod
 # статистика по странам
 users_from_ru = asyncio.run(db.cmd_select_ru_users())
 users_from_kz = asyncio.run(db.cmd_select_kz_users())
-# переменная с текущей датой
-current_date = datetime.today().strftime('%Y-%m-%d')
+
+
 
 
 LEXICON_ADMIN: dict[str, str | list] = {
@@ -47,7 +49,7 @@ LEXICON_ADMIN: dict[str, str | list] = {
     'unfilled_message': 'Вы ещё не создавали сообщение для рассылки.\n'
                         '\n'
                         'Нажмите кнопку - "Создать рассылку" для создания сообщения рассылки.',
-    'analytics': f'Статистика на {current_date}\n'
+    'analytics': f'Статистика на {dt.date.today()}\n'
                  '\n'
                  f'<b>Общее кол-во пользователей бота: </b>{all_users} \n'
                  f'<b>Новых пользователей Сегодня: </b>{new_users_today}\n'
