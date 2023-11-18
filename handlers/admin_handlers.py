@@ -307,6 +307,7 @@ async def start_newsletter_cmd(message: Message,  state: FSMContext):
     except Exception as e:
         print(e)
         await message.answer(text=LEXICON_ADMIN['newsletter_error'], reply_markup=kb_buttons_admin_panel)
+        await message.answer(text=f'Сообщение об ошибке: {str(e)}')
 
 
 # хэндлер срабатывает на некорректное сообщение на этапе выбора категории
