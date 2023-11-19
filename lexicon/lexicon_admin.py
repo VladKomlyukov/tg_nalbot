@@ -3,53 +3,30 @@ import asyncio
 from math import *
 import datetime as dt
 
-
-
-# все пользователи
-all_users = asyncio.run(db.cmd_select_all_users())
-new_users_today = asyncio.run(db.cmd_select_users_for_today())
-# заполнившие анкеты
-users_form_completed = asyncio.run(db.cmd_select_completed_form_users())
-users_form_completed_today = asyncio.run(db.cmd_select_completed_form_users_today())
-# только запустили бота
-users_started_bot = asyncio.run(db.cmd_select_start_bot_users())
-users_started_bot_today = asyncio.run((db.cmd_select_start_bot_users_today()))
-# выбор страны
-users_country_choice = asyncio.run(db.cmd_select_users_country_choice())
-users_country_choice_today = asyncio.run((db.cmd_select_users_country_choice_today()))
-# ввод возраста
-users_age_choice = asyncio.run(db.cmd_select_users_age_choice())
-users_age_choice_today = asyncio.run((db.cmd_select_users_age_choice_today()))
-# наличие кредитов
-users_having_credits = asyncio.run(db.cmd_select_users_having_credits())
-users_having_credits_today = asyncio.run((db.cmd_select_users_having_credits_today()))
-# статистика по странам
-users_from_ru = asyncio.run(db.cmd_select_ru_users())
-users_from_kz = asyncio.run(db.cmd_select_kz_users())
-
-
-
-
-LEXICON_ADMIN: dict[str, str | list] = {
-    'cancel_btn': 'Отменить',
-    'analytics_btn': 'Аналитика',
-    'newsletter_btn': 'Создать рассылку',
-    'exit_btn': 'Выйти',
-    'show_message_btn': 'Посмотреть сообщение',
-    'return_to_main_menu_btn': 'Вернуться в меню',
-    'Admin_login_message': 'Для входа в панель администратора введите пароль\n',
-    'login_successful_message': 'Вы вошли в панель администратора',
-    'Cancel_admin_panel_message': 'Вы отменили вход в панель администратора',
-    'just_authorized': 'Вы уже вошли в админ панель',
-    'incorrect_pass': 'Вы ввели некорректный пароль\n'
-                      'Попробуйте ввести правильный пароль\n',
-    'not_login_and_newsletter': 'Для использования данной команды необходимо войти в панель администратора.\n',
-    'exit_message': 'Вы вышли из панели администратора',
-    'return_menu_message': 'Вы вернулись в меню',
-    'unfilled_message': 'Вы ещё не создавали сообщение для рассылки.\n'
-                        '\n'
-                        'Нажмите кнопку - "Создать рассылку" для создания сообщения рассылки.',
-    'analytics': f'Статистика на {dt.date.today()}\n'
+async def analytics():
+    # все пользователи
+    all_users = await db.cmd_select_all_users()
+    new_users_today = await db.cmd_select_users_for_today()
+    # заполнившие анкеты
+    users_form_completed = await db.cmd_select_completed_form_users()
+    users_form_completed_today = await db.cmd_select_completed_form_users_today()
+    # только запустили бота
+    users_started_bot = await db.cmd_select_start_bot_users()
+    users_started_bot_today = await db.cmd_select_start_bot_users_today()
+    # выбор страны
+    users_country_choice = await db.cmd_select_users_country_choice()
+    users_country_choice_today = await db.cmd_select_users_country_choice_today()
+    # ввод возраста
+    users_age_choice = await db.cmd_select_users_age_choice()
+    users_age_choice_today = await db.cmd_select_users_age_choice_today()
+    # наличие кредитов
+    users_having_credits = await db.cmd_select_users_having_credits()
+    users_having_credits_today = await db.cmd_select_users_having_credits_today()
+    # статистика по странам
+    users_from_ru = await db.cmd_select_ru_users()
+    users_from_kz = await db.cmd_select_kz_users()
+    analytics_all = {
+        'analytics': f'Статистика на {dt.date.today()}\n'
                  '\n'
                  f'<b>Общее кол-во пользователей бота: </b>{all_users} \n'
                  f'<b>Новых пользователей Сегодня: </b>{new_users_today}\n'
@@ -80,7 +57,29 @@ LEXICON_ADMIN: dict[str, str | list] = {
                  f'<b>Пользователи из России:</b> '
                  f'{users_from_ru} — {floor((users_from_ru/all_users)*100)}%\n'
                  f'<b>Пользователи из Казахстана:</b> '
-                 f'{users_from_kz} — {ceil((users_from_kz/all_users)*100)}%\n',
+                 f'{users_from_kz} — {ceil((users_from_kz/all_users)*100)}%\n'
+    }
+    return analytics_all['analytics']
+
+LEXICON_ADMIN: dict[str, str | list] = {
+    'cancel_btn': 'Отменить',
+    'analytics_btn': 'Аналитика',
+    'newsletter_btn': 'Создать рассылку',
+    'exit_btn': 'Выйти',
+    'show_message_btn': 'Посмотреть сообщение',
+    'return_to_main_menu_btn': 'Вернуться в меню',
+    'Admin_login_message': 'Для входа в панель администратора введите пароль\n',
+    'login_successful_message': 'Вы вошли в панель администратора',
+    'Cancel_admin_panel_message': 'Вы отменили вход в панель администратора',
+    'just_authorized': 'Вы уже вошли в админ панель',
+    'incorrect_pass': 'Вы ввели некорректный пароль\n'
+                      'Попробуйте ввести правильный пароль\n',
+    'not_login_and_newsletter': 'Для использования данной команды необходимо войти в панель администратора.\n',
+    'exit_message': 'Вы вышли из панели администратора',
+    'return_menu_message': 'Вы вернулись в меню',
+    'unfilled_message': 'Вы ещё не создавали сообщение для рассылки.\n'
+                        '\n'
+                        'Нажмите кнопку - "Создать рассылку" для создания сообщения рассылки.',
     'newsletter_start_message': 'ШАГ 1. Введите ТЕКСТ сообщения для рассылки, БЕЗ ФОТО',
     'newsletter_photo_message': 'ШАГ 2. Добавьте только ФОТО для рассылки, БЕЗ ТЕКСТА',
     'newsletter_check_message': 'Фото добавлено к сообщению для рассылки.\n'

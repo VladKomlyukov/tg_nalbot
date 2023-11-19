@@ -1,12 +1,12 @@
 import asyncio
-from aiogram import Bot, Dispatcher
+from aiogram import Bot, Dispatcher, exceptions
 from config_data.config import Config, load_config
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import default_state, State, StatesGroup
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import Message, PhotoSize
 from aiogram.filters import Command, StateFilter
-from lexicon.lexicon_admin import LEXICON_ADMIN
+from lexicon.lexicon_admin import LEXICON_ADMIN, analytics
 from math import *
 import datetime as dt
 from aiogram import F, Router
@@ -15,6 +15,7 @@ from buttons import (kb_buttons_admin_cancel, kb_buttons_admin_panel, kb_buttons
                      kb_buttons_admin_run_newsletter_menu, kb_buttons_admin_reset)
 from lexicon.lexicon_pswd import PASSWORD
 import data_base.database as db
+import sys
 
 # Загружаем конфиг в переменную config
 config: Config = load_config()
@@ -92,60 +93,9 @@ async def incorrect_password(message: Message):
 # хэндлер срабатывает на команду Аналитика
 @router.message(F.text == LEXICON_ADMIN['analytics_btn'])
 async def analitycs_cmd(message: Message):
-    # все пользователи
-    all_users = await db.cmd_select_all_users()
-    new_users_today = await db.cmd_select_users_for_today()
-    # заполнившие анкеты
-    users_form_completed = await db.cmd_select_completed_form_users()
-    users_form_completed_today = await db.cmd_select_completed_form_users_today()
-    # только запустили бота
-    users_started_bot = await db.cmd_select_start_bot_users()
-    users_started_bot_today = await db.cmd_select_start_bot_users_today()
-    # выбор страны
-    users_country_choice = await db.cmd_select_users_country_choice()
-    users_country_choice_today = await (db.cmd_select_users_country_choice_today())
-    # ввод возраста
-    users_age_choice = await db.cmd_select_users_age_choice()
-    users_age_choice_today = await db.cmd_select_users_age_choice_today()
-    # наличие кредитов
-    users_having_credits = await db.cmd_select_users_having_credits()
-    users_having_credits_today = await db.cmd_select_users_having_credits_today()
-    # статистика по странам
-    users_from_ru = await db.cmd_select_ru_users()
-    users_from_kz = await db.cmd_select_kz_users()
     if message.from_user.id in user_login_data:
-        await message.answer(text=f'Статистика на {dt.date.today()}\n'
-                 '\n'
-                 f'<b>Общее кол-во пользователей бота: </b>{all_users} \n'
-                 f'<b>Новых пользователей Сегодня: </b>{new_users_today}\n'
-                 '\n'
-                 f'<b>Заполнили анкету:</b>\n'
-                 f'> Всего: {users_form_completed} — {floor((users_form_completed/all_users)*100)}%\n'
-                 f'> Сегодня: {users_form_completed_today} —'
-                 f' {floor((users_form_completed_today/new_users_today)*100)}%\n'
-                 '\n'
-                 f'<b>Остановились после запуска:</b>\n'
-                 f'> Всего: {users_started_bot} — {floor((users_started_bot/all_users)*100)}%\n'
-                 f'> Сегодня: {users_started_bot_today} — {floor((users_started_bot_today/new_users_today)*100)}%\n'
-                 '\n'
-                 f'<b>Остановились на выборе страны:</b>\n'
-                 f'> Всего: {users_country_choice} — {floor((users_country_choice/all_users)*100)}%\n'
-                 f'> Сегодня: {users_country_choice_today} —'
-                 f' {floor((users_country_choice_today/new_users_today)*100)}%\n'
-                 '\n'
-                 f'<b>Остановились на вводе возраста:</b>\n'
-                 f'> Всего: {users_age_choice} — {floor((users_age_choice/all_users)*100)}%\n'
-                 f'> Сегодня: {users_age_choice_today} — {floor((users_age_choice_today/new_users_today)*100)}%\n'
-                 '\n'
-                 f'<b>Остановились на вопросе о наличии кредитов:</b>\n'
-                 f'> Всего: {users_having_credits} — {floor((users_having_credits/all_users)*100)}%\n'
-                 f'> Сегодня: {users_having_credits_today} — '
-                 f'{floor((users_having_credits_today/new_users_today)*100)}%\n'
-                 '\n'
-                 f'<b>Пользователи из России:</b> '
-                 f'{users_from_ru} — {floor((users_from_ru/all_users)*100)}%\n'
-                 f'<b>Пользователи из Казахстана:</b> '
-                 f'{users_from_kz} — {ceil((users_from_kz/all_users)*100)}%\n',
+        analytics_text = await analytics()
+        await message.answer(text=analytics_text,
                              reply_markup=kb_buttons_admin_panel)
     else:
         await message.answer(text=LEXICON_ADMIN['not_login_and_newsletter'],
@@ -231,83 +181,200 @@ async def users_category_confirmation_cmd(message: Message, state: FSMContext):
                 F.text.lower() == LEXICON_ADMIN['run_newsletter'])
 async def start_newsletter_cmd(message: Message,  state: FSMContext):
     await message.answer(text=LEXICON_ADMIN['newsletter_waiting'], reply_markup=kb_buttons_admin_panel)
-    try:
-        if user_message_for_sending[message.from_user.id]['category'] == 'все пользователи':
-            category: str = 'все пользователи'
-            users_list: list = await db.cmd_select_users_with_status(category)
-            for el in users_list:
+    if user_message_for_sending[message.from_user.id]['category'] == 'все пользователи':
+        category: str = 'все пользователи'
+        # получаем из БД пользователей по категории
+        users_list: list = await db.cmd_select_users_with_status(category)
+        # запускаем рассылку по каждому пользователю из полученного списка
+        for el in users_list:
+            # используем try/except для отправки сообщения пользователю
+            try:
+                await bot.send_photo(chat_id=el, photo=user_message_for_sending[message.from_user.id]['photo_id'],
+                                             caption=user_message_for_sending[message.from_user.id]['message_text'])
+            # если получаем ошибку, то отправляется сообщение в чат создателю бота об ошибке
+            # и ошибка записывается в файлы вывода, затем продолжается отправка дальше по списку
+            except Exception as e:
+                print(e)
+                sys.stdout = open("stdout.txt", "a")
+                sys.stderr = open("stderr.txt", "a")
+                await bot.send_message(chat_id='776273699',
+                                       text=f'Сообщение об ошибке при рассылке от бота ooonalbot: {str(e)}\n'
+                                            f'ID чата телеграм: {el}')
+                continue
+        # пишем сообщение о завершении рассылки, очищаем состояние, удаляем сообщение пользователя для рассылки из
+        # словаря
+        await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
+        await state.clear()
+        del user_message_for_sending[message.from_user.id]
+
+    elif user_message_for_sending[message.from_user.id]['category'] == 'заполнившие анкету':
+        category: str = 'заполнившие анкету'
+        users_list: list = await db.cmd_select_users_with_status(category)
+        # запускаем рассылку по каждому пользователю из полученного списка
+        for el in users_list:
+            # используем try/except для отправки сообщения пользователю
+            try:
                 await bot.send_photo(chat_id=el, photo=user_message_for_sending[message.from_user.id]['photo_id'],
                                      caption=user_message_for_sending[message.from_user.id]['message_text'])
-            await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
-            await state.clear()
-            del user_message_for_sending[message.from_user.id]
-        elif user_message_for_sending[message.from_user.id]['category'] == 'заполнившие анкету':
-            category: str = 'заполнившие анкету'
-            users_list: list = await db.cmd_select_users_with_status(category)
-            for el in users_list:
+            # если получаем ошибку, то отправляется сообщение в чат создателю бота об ошибке
+            # и ошибка записывается в файлы вывода, затем продолжается отправка дальше по списку
+            except Exception as e:
+                print(e)
+                sys.stdout = open("stdout.txt", "a")
+                sys.stderr = open("stderr.txt", "a")
+                await bot.send_message(chat_id='776273699',
+                                       text=f'Сообщение об ошибке при рассылке от бота ooonalbot: {str(e)}\n'
+                                            f'ID чата телеграм: {el}')
+                continue
+        # пишем сообщение о завершении рассылки, очищаем состояние, удаляем сообщение пользователя для рассылки из
+        # словаря
+        await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
+        await state.clear()
+        del user_message_for_sending[message.from_user.id]
+    elif user_message_for_sending[message.from_user.id]['category'] == 'пользователи на этапе - запустили бота':
+        category: str = 'пользователи на этапе - запустили бота'
+        users_list: list = await db.cmd_select_users_with_status(category)
+        # запускаем рассылку по каждому пользователю из полученного списка
+        for el in users_list:
+            # используем try/except для отправки сообщения пользователю
+            try:
                 await bot.send_photo(chat_id=el, photo=user_message_for_sending[message.from_user.id]['photo_id'],
                                      caption=user_message_for_sending[message.from_user.id]['message_text'])
-            await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
-            await state.clear()
-            del user_message_for_sending[message.from_user.id]
-        elif user_message_for_sending[message.from_user.id]['category'] == 'пользователи на этапе - запустили бота':
-            category: str = 'пользователи на этапе - запустили бота'
-            users_list: list = await db.cmd_select_users_with_status(category)
-            for el in users_list:
+            # если получаем ошибку, то отправляется сообщение в чат создателю бота об ошибке
+            # и ошибка записывается в файлы вывода, затем продолжается отправка дальше по списку
+            except Exception as e:
+                print(e)
+                sys.stdout = open("stdout.txt", "a")
+                sys.stderr = open("stderr.txt", "a")
+                await bot.send_message(chat_id='776273699',
+                                       text=f'Сообщение об ошибке при рассылке от бота ooonalbot: {str(e)}\n'
+                                            f'ID чата телеграм: {el}')
+                continue
+        # пишем сообщение о завершении рассылки, очищаем состояние, удаляем сообщение пользователя для рассылки из
+        # словаря
+        await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
+        await state.clear()
+        del user_message_for_sending[message.from_user.id]
+    elif user_message_for_sending[message.from_user.id]['category'] == 'пользователи на этапе - выбор страны':
+        category: str = 'пользователи на этапе - выбор страны'
+        users_list: list = await db.cmd_select_users_with_status(category)
+        # запускаем рассылку по каждому пользователю из полученного списка
+        for el in users_list:
+            # используем try/except для отправки сообщения пользователю
+            try:
                 await bot.send_photo(chat_id=el, photo=user_message_for_sending[message.from_user.id]['photo_id'],
                                      caption=user_message_for_sending[message.from_user.id]['message_text'])
-            await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
-            await state.clear()
-            del user_message_for_sending[message.from_user.id]
-        elif user_message_for_sending[message.from_user.id]['category'] == 'пользователи на этапе - выбор страны':
-            category: str = 'пользователи на этапе - выбор страны'
-            users_list: list = await db.cmd_select_users_with_status(category)
-            for el in users_list:
+            # если получаем ошибку, то отправляется сообщение в чат создателю бота об ошибке
+            # и ошибка записывается в файлы вывода, затем продолжается отправка дальше по списку
+            except Exception as e:
+                print(e)
+                sys.stdout = open("stdout.txt", "a")
+                sys.stderr = open("stderr.txt", "a")
+                await bot.send_message(chat_id='776273699',
+                                       text=f'Сообщение об ошибке при рассылке от бота ooonalbot: {str(e)}\n'
+                                            f'ID чата телеграм: {el}')
+                continue
+        # пишем сообщение о завершении рассылки, очищаем состояние, удаляем сообщение пользователя для рассылки из
+        # словаря
+        await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
+        await state.clear()
+        del user_message_for_sending[message.from_user.id]
+    elif user_message_for_sending[message.from_user.id]['category'] == 'пользователи на этапе - ввод возраста':
+        category: str = 'пользователи на этапе - ввод возраста'
+        users_list: list = await db.cmd_select_users_with_status(category)
+        # запускаем рассылку по каждому пользователю из полученного списка
+        for el in users_list:
+            # используем try/except для отправки сообщения пользователю
+            try:
                 await bot.send_photo(chat_id=el, photo=user_message_for_sending[message.from_user.id]['photo_id'],
                                      caption=user_message_for_sending[message.from_user.id]['message_text'])
-            await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
-            await state.clear()
-            del user_message_for_sending[message.from_user.id]
-        elif user_message_for_sending[message.from_user.id]['category'] == 'пользователи на этапе - ввод возраста':
-            category: str = 'пользователи на этапе - ввод возраста'
-            users_list: list = await db.cmd_select_users_with_status(category)
-            for el in users_list:
+            # если получаем ошибку, то отправляется сообщение в чат создателю бота об ошибке
+            # и ошибка записывается в файлы вывода, затем продолжается отправка дальше по списку
+            except Exception as e:
+                print(e)
+                sys.stdout = open("stdout.txt", "a")
+                sys.stderr = open("stderr.txt", "a")
+                await bot.send_message(chat_id='776273699',
+                                       text=f'Сообщение об ошибке при рассылке от бота ooonalbot: {str(e)}\n'
+                                            f'ID чата телеграм: {el}')
+                continue
+        # пишем сообщение о завершении рассылки, очищаем состояние, удаляем сообщение пользователя для рассылки из
+        # словаря
+        await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
+        await state.clear()
+        del user_message_for_sending[message.from_user.id]
+    elif user_message_for_sending[message.from_user.id]['category'] == 'пользователи на этапе - наличие кредитов':
+        category: str = 'пользователи на этапе - наличие кредитов'
+        users_list: list = await db.cmd_select_users_with_status(category)
+        # запускаем рассылку по каждому пользователю из полученного списка
+        for el in users_list:
+            # используем try/except для отправки сообщения пользователю
+            try:
                 await bot.send_photo(chat_id=el, photo=user_message_for_sending[message.from_user.id]['photo_id'],
                                      caption=user_message_for_sending[message.from_user.id]['message_text'])
-            await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
-            await state.clear()
-            del user_message_for_sending[message.from_user.id]
-        elif user_message_for_sending[message.from_user.id]['category'] == 'пользователи на этапе - наличие кредитов':
-            category: str = 'пользователи на этапе - наличие кредитов'
-            users_list: list = await db.cmd_select_users_with_status(category)
-            for el in users_list:
+            # если получаем ошибку, то отправляется сообщение в чат создателю бота об ошибке
+            # и ошибка записывается в файлы вывода, затем продолжается отправка дальше по списку
+            except Exception as e:
+                print(e)
+                sys.stdout = open("stdout.txt", "a")
+                sys.stderr = open("stderr.txt", "a")
+                await bot.send_message(chat_id='776273699',
+                                       text=f'Сообщение об ошибке при рассылке от бота ooonalbot: {str(e)}\n'
+                                            f'ID чата телеграм: {el}')
+                continue
+        # пишем сообщение о завершении рассылки, очищаем состояние, удаляем сообщение пользователя для рассылки из
+        # словаря
+        await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
+        await state.clear()
+        del user_message_for_sending[message.from_user.id]
+    elif user_message_for_sending[message.from_user.id]['category'] == 'пользователи из россии':
+        category: str = 'пользователи из россии'
+        users_list: list = await db.cmd_select_users_with_status(category)
+        # запускаем рассылку по каждому пользователю из полученного списка
+        for el in users_list:
+            # используем try/except для отправки сообщения пользователю
+            try:
                 await bot.send_photo(chat_id=el, photo=user_message_for_sending[message.from_user.id]['photo_id'],
                                      caption=user_message_for_sending[message.from_user.id]['message_text'])
-            await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
-            await state.clear()
-            del user_message_for_sending[message.from_user.id]
-        elif user_message_for_sending[message.from_user.id]['category'] == 'пользователи из россии':
-            category: str = 'пользователи из россии'
-            users_list: list = await db.cmd_select_users_with_status(category)
-            for el in users_list:
+            # если получаем ошибку, то отправляется сообщение в чат создателю бота об ошибке
+            # и ошибка записывается в файлы вывода, затем продолжается отправка дальше по списку
+            except Exception as e:
+                print(e)
+                sys.stdout = open("stdout.txt", "a")
+                sys.stderr = open("stderr.txt", "a")
+                await bot.send_message(chat_id='776273699',
+                                       text=f'Сообщение об ошибке при рассылке от бота ooonalbot: {str(e)}\n'
+                                            f'ID чата телеграм: {el}')
+                continue
+        # пишем сообщение о завершении рассылки, очищаем состояние, удаляем сообщение пользователя для рассылки из
+        # словаря
+        await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
+        await state.clear()
+        del user_message_for_sending[message.from_user.id]
+    elif user_message_for_sending[message.from_user.id]['category'] == 'пользователи из казахстана':
+        category: str = 'пользователи из казахстана'
+        users_list: list = await db.cmd_select_users_with_status(category)
+        # запускаем рассылку по каждому пользователю из полученного списка
+        for el in users_list:
+            # используем try/except для отправки сообщения пользователю
+            try:
                 await bot.send_photo(chat_id=el, photo=user_message_for_sending[message.from_user.id]['photo_id'],
                                      caption=user_message_for_sending[message.from_user.id]['message_text'])
-            await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
-            await state.clear()
-            del user_message_for_sending[message.from_user.id]
-        elif user_message_for_sending[message.from_user.id]['category'] == 'пользователи из казахстана':
-            category: str = 'пользователи из казахстана'
-            users_list: list = await db.cmd_select_users_with_status(category)
-            for el in users_list:
-                await bot.send_photo(chat_id=el, photo=user_message_for_sending[message.from_user.id]['photo_id'],
-                                     caption=user_message_for_sending[message.from_user.id]['message_text'])
-            await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
-            await state.clear()
-            del user_message_for_sending[message.from_user.id]
-    except Exception as e:
-        print(e)
-        await message.answer(text=LEXICON_ADMIN['newsletter_error'], reply_markup=kb_buttons_admin_panel)
-        await message.answer(text=f'Сообщение об ошибке: {str(e)}')
+            # если получаем ошибку, то отправляется сообщение в чат создателю бота об ошибке
+            # и ошибка записывается в файлы вывода, затем продолжается отправка дальше по списку
+            except Exception as e:
+                print(e)
+                sys.stdout = open("stdout.txt", "a")
+                sys.stderr = open("stderr.txt", "a")
+                await bot.send_message(chat_id='776273699',
+                                       text=f'Сообщение об ошибке при рассылке от бота ooonalbot: {str(e)}\n'
+                                            f'ID чата телеграм: {el}')
+                continue
+        # пишем сообщение о завершении рассылки, очищаем состояние, удаляем сообщение пользователя для рассылки из
+        # словаря
+        await message.answer(text=LEXICON_ADMIN['newsletter_completed'], reply_markup=kb_buttons_admin_panel)
+        await state.clear()
+        del user_message_for_sending[message.from_user.id]
 
 
 # хэндлер срабатывает на некорректное сообщение на этапе выбора категории
